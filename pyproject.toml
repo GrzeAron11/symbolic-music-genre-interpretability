@@ -1,0 +1,42 @@
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
+name = "wimu_smgi"
+version = "0.0.1"
+description = "A short description of the project."
+authors = [
+  { name = "kmlukasik, GrzeAron11, ad03am" },
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "loguru",
+    "mkdocs",
+    "pip",
+    "pytest",
+    "python-dotenv",
+    "ruff",
+    "tqdm",
+    "typer",
+    "numpy>=2.4.4,<3.0.0",
+    "torch",
+    "lightning",
+    "pretty_midi"
+]
+
+[tool.ruff]
+line-length = 99
+src = ["wimu_smgi"]
+include = ["pyproject.toml", "wimu_smgi/**/*.py"]
+
+[tool.ruff.lint]
+extend-select = ["I"]  # Add import sorting
+
+[tool.ruff.lint.isort]
+known-first-party = ["wimu_smgi"]
+force-sort-within-sections = true
