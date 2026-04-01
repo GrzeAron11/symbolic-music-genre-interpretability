@@ -192,3 +192,9 @@ cython_debug/
 
 # VS Code
 .vscode/
+
+#models
+/models/
+
+#lightning logs
+/lightning_logs/

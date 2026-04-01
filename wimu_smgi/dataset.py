@@ -1,29 +1,87 @@
+import torch
+from torch.utils.data import Dataset, DataLoader
+import numpy as np
+import pandas as pd
 from pathlib import Path
-
 from loguru import logger
-from tqdm import tqdm
-import typer
 
-from wimu_smgi.config import PROCESSED_DATA_DIR, RAW_DATA_DIR
+class MusicGenreDataset(Dataset):
+    def __init__(self, npy_dir: Path, csv_path: Path, seq_len: int = 128):
+        self.npy_dir = Path(npy_dir)
+        self.seq_len = seq_len
 
-app = typer.Typer()
-
-
-@app.command()
-def main(
-    # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-    input_path: Path = RAW_DATA_DIR / "dataset.csv",
-    output_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
-    # ----------------------------------------------
-):
-    # ---- REPLACE THIS WITH YOUR OWN CODE ----
-    logger.info("Processing dataset...")
-    for i in tqdm(range(10), total=10):
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
-    logger.success("Processing dataset complete.")
-    # -----------------------------------------
+        logger.info(f"Loading labels from: {csv_path}")
+        self.df = pd.read_csv(csv_path)
+        self.file_names = self.df['file_id'].values
+        labels_df = self.df.drop(columns=['file_id', 'genre_list'])
+        self.genre_columns = labels_df.columns.tolist()
 
 
-if __name__ == "__main__":
-    app()
+        #do prototypu dla niepełnego zbioru danych
+        self.df.set_index('file_id', inplace=True)
+        self.valid_paths = []
+        self.labels = []
+        all_npy_files = list(self.npy_dir.glob("*.npy"))
+        for npy_path in all_npy_files:
+                    track_id = npy_path.stem.split("__")[0]
+                    # Jeśli ten utwór znajduje się w naszym CSV, dodajemy go do Datasetu
+                    if track_id in self.df.index:
+                        self.valid_paths.append(npy_path)
+                        label_vector = self.df.loc[track_id, self.genre_columns].values.astype(np.float32)
+                        self.labels.append(label_vector)
+
+
+        self.labels = labels_df.values.astype(np.float32)
+        logger.info(f"Dataset initialized. Samples: {len(self.valid_paths)}, Genres: {len(self.genre_columns)}")
+    def __len__(self):
+        return len(self.valid_paths)
+    def __getitem__(self, idx):
+        file_path = self.valid_paths[idx]
+        
+        m_final = np.zeros((self.seq_len, 128), dtype=np.float32)
+        d_final = np.zeros((self.seq_len, 128), dtype=np.float32)
+        
+        try:
+            data = np.load(file_path, allow_pickle=True).item()
+            melody = data.get('melody')
+            drums = data.get('drums')
+
+            has_m = melody is not None and melody.size > 0
+            has_d = drums is not None and drums.size > 0
+
+            if has_m:
+                actual_len = melody.shape[0]
+            elif has_d:
+                actual_len = drums.shape[0]
+            else:
+                actual_len = 0
+
+            if actual_len > 0:
+                if actual_len > self.seq_len:
+                    start = np.random.randint(0, actual_len - self.seq_len)
+                    end = start + self.seq_len
+                    if has_m and melody.shape[0] >= end:
+                        m_final[:] = melody[start:end, :128]
+                    
+                    if has_d and drums.shape[0] >= end:
+                        d_final[:] = drums[start:end, :128]
+                else:
+                    if has_m:
+                        m_final[:actual_len, :] = melody[:actual_len, :128]
+                    if has_d:
+                        d_final[:actual_len, :] = drums[:actual_len, :128]
+
+            m_tensor = torch.from_numpy(m_final).T
+            d_tensor = torch.from_numpy(d_final).T
+            
+            x = torch.stack([m_tensor, d_tensor], dim=0)
+            y = torch.tensor(self.labels[idx], dtype=torch.float32)
+            
+            non_zero_elements = torch.count_nonzero(x)
+            print(f"DEBUG: {file_path.name} | Active notes in batch: {non_zero_elements}")
+
+            return x, y
+
+        except Exception as e:
+            logger.error(f"Critical error in {file_path.name}: {e}")
+            return torch.zeros((2, 128, self.seq_len)), torch.tensor(self.labels[idx], dtype=torch.float32)

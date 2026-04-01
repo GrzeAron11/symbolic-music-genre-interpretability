@@ -10,7 +10,7 @@ authors = [
   { name = "kmlukasik, GrzeAron11, ad03am" },
 ]
 readme = "README.md"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.11,<3.14"
 classifiers = [
     "Programming Language :: Python :: 3",
 ]
@@ -26,7 +26,9 @@ dependencies = [
     "numpy>=2.4.4,<3.0.0",
     "torch",
     "lightning",
-    "pretty_midi"
+    "pretty_midi",
+    "torchvision (>=0.26.0,<0.27.0)",
+    "pandas (>=3.0.2,<4.0.0)"
 ]
 
 [tool.ruff]

@@ -18,6 +18,20 @@ requirements:
 	
 
 
+.PHONY: process_midi
+process_midi:
+	poetry run python -m wimu_smgi.process_midi
+	
+
+.PHONY: train
+train:
+	poetry run python -m wimu_smgi.modeling.train
+
+
+.PHONY: add-gpu
+add-gpu: ## Install pytorch with gpu support
+	poetry run pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124 --upgrade --force-reinstall
+
 
 ## Delete all compiled Python files
 .PHONY: clean
