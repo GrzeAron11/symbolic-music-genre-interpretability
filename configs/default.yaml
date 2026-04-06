@@ -1,0 +1,14 @@
+predict:
+  model_path: models/resnet50_prototype.ckpt
+  csv_path: data/processed/labels/msd-topMAGD.csv
+  threshold: 0.5
+  seq_len: 128
+
+preprocessing:
+  sample_rate: 100
+  input_path: data/raw/lmd_matched
+  output_path: data/processed/npy_arrays
+
+labels:
+  input_file: msd-topMAGD.cls
+  output_file: msd-topMAGD.csv

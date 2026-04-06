@@ -12,7 +12,7 @@ app = typer.Typer()
 
 def process_midi(midi_path: Path, fs: int = 100):
     midi_data = pretty_midi.PrettyMIDI(str(midi_path))
-    melodic_tracks, drum_tracks = [], [] #podzial na melodie i perkusje jak w paperze Devakosa
+    melodic_tracks, drum_tracks = [], []  # podzial na melodie i perkusje jak w paperze Devakosa
     for instrument in midi_data.instruments:
         roll = instrument.get_piano_roll(fs=fs)
         if instrument.is_drum:
@@ -29,7 +29,7 @@ def process_midi(midi_path: Path, fs: int = 100):
             combined[:, :track.shape[1]] += track
         combined = np.clip(combined, 0, 127)
         return combined.T
-    
+
     melodic_t = combine_and_transpose(melodic_tracks)
     drum_t = combine_and_transpose(drum_tracks)
     if drum_t is None and melodic_t is not None:
@@ -42,8 +42,9 @@ def process_midi(midi_path: Path, fs: int = 100):
 
 @app.command()
 def main(
-    input_path: Path = RAW_DATA_DIR / "lmd_matched",
-    output_path: Path = PROCESSED_DATA_DIR / "npy_arrays",
+    input_path: Path = typer.Option(RAW_DATA_DIR / "lmd_matched", help="Katalog z plikami MIDI"),
+    output_path: Path = typer.Option(PROCESSED_DATA_DIR / "npy_arrays", help="Katalog wyjściowy dla plików .npy"),
+    sample_rate: int = typer.Option(100, "--sample-rate", help="Rozdzielczość czasowa piano rollu w Hz"),
 ):
     logger.info(f"Starting MIDI files processing... {input_path}")
     output_path.mkdir(parents=True, exist_ok=True)
@@ -54,9 +55,9 @@ def main(
     logger.info(f"Found {len(midi_files)} MIDI files.")
     for midi_path in tqdm(midi_files, desc="Processing dataset"):
         try:
-            melody, drums = process_midi(midi_path)
-            
-            #w folderach jest kilka wersji midi tego samego utworu, id utworu to nazwa folderu, a nie nazwa pliku
+            melody, drums = process_midi(midi_path, fs=sample_rate)
+
+            # w folderach jest kilka wersji midi tego samego utworu, id utworu to nazwa folderu, a nie nazwa pliku
             track_id = midi_path.parent.name
             short_hash = midi_path.stem[:5]
             out_file = output_path / f"{track_id}__{short_hash}.npy"
@@ -65,6 +66,7 @@ def main(
             logger.error(f"Failed to process {midi_path.name}: {e}")
 
     logger.success(f"Dataset processing complete! .npy files saved to {output_path}")
+
 
 if __name__ == "__main__":
     app()

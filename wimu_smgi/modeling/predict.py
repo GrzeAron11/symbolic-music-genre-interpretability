@@ -1,15 +1,22 @@
 from pathlib import Path
 import numpy as np
-import torch
-from loguru import logger
-from tqdm import tqdm
-import typer
 import pandas as pd
+import torch
+import typer
+import yaml
+from loguru import logger
 
-from wimu_smgi.config import MODELS_DIR, PROCESSED_DATA_DIR
 from wimu_smgi.modeling.model import MusicGenreClassifier
 
 app = typer.Typer()
+
+
+def _load_config(config_path: Path) -> dict:
+    if config_path.exists():
+        with open(config_path) as f:
+            return yaml.safe_load(f) or {}
+    return {}
+
 
 def preprocess_sample(npy_path: Path, seq_len: int = 128):
     """Przetwarza pojedynczy plik .npy tak samo jak Dataset."""
@@ -27,41 +34,48 @@ def preprocess_sample(npy_path: Path, seq_len: int = 128):
     if actual_len > 0:
         start = max(0, (actual_len // 2) - (seq_len // 2))
         end = start + seq_len
-        
+
         if melody is not None and melody.size > 0:
             crop = melody[start:end, :128]
-            m_final[:crop.shape[0], :] = crop
+            m_final[: crop.shape[0], :] = crop
         if drums is not None and drums.size > 0:
             crop = drums[start:end, :128]
-            d_final[:crop.shape[0], :] = crop
+            d_final[: crop.shape[0], :] = crop
 
     m_tensor = torch.from_numpy(m_final).T
     d_tensor = torch.from_numpy(d_final).T
     x = torch.stack([m_tensor, d_tensor], dim=0)
     return x.unsqueeze(0)
 
+
 @app.command()
-
 def main(
-    checkpoint_path: Path = typer.Option(..., "--model", help="Ścieżka do pliku .ckpt"),
     npy_path: Path = typer.Option(..., "--input", help="Ścieżka do pliku .npy do sprawdzenia"),
-    csv_path: Path = typer.Option(..., "--labels", help="Ścieżka do msd-topMAGD.csv (żeby znać nazwy gatunków)"),
-    threshold: float = typer.Option(0.5, help="Próg pewności dla gatunku")
+    config: Path = typer.Option(Path("configs/default.yaml"), "--config", help="Plik konfiguracyjny"),
+    checkpoint_path: Path = typer.Option(None, "--model", help="Ścieżka do pliku .ckpt (nadpisuje config)"),
+    csv_path: Path = typer.Option(None, "--labels", help="Ścieżka do CSV z gatunkami (nadpisuje config)"),
+    threshold: float = typer.Option(None, "--threshold", help="Próg pewności (nadpisuje config)"),
+    seq_len: int = typer.Option(None, "--seq-len", help="Długość sekwencji (nadpisuje config)"),
 ):
-    df = pd.read_csv(csv_path)
-    genre_names = [c for c in df.columns if c not in ['file_id', 'genre_list']]
-    num_classes = len(genre_names)
+    cfg = _load_config(config).get("predict", {})
 
+    checkpoint_path = checkpoint_path or Path(cfg.get("model_path", "models/resnet50_prototype.ckpt"))
+    csv_path = csv_path or Path(cfg.get("csv_path", "data/processed/labels/msd-topMAGD.csv"))
+    threshold = threshold if threshold is not None else cfg.get("threshold", 0.5)
+    seq_len = seq_len if seq_len is not None else cfg.get("seq_len", 128)
+
+    df = pd.read_csv(csv_path)
+    genre_names = [c for c in df.columns if c not in ["file_id", "genre_list"]]
 
     logger.info(f"Loading model from {checkpoint_path}...")
     model = MusicGenreClassifier.load_from_checkpoint(
-        checkpoint_path, 
-        num_classes=num_classes
+        checkpoint_path,
+        num_classes=len(genre_names)
     )
-    model.eval() 
+    model.eval()
     model.freeze()
 
-    x = preprocess_sample(npy_path)
+    x = preprocess_sample(npy_path, seq_len=seq_len)
 
     with torch.no_grad():
         logits = model(x)
@@ -72,7 +86,7 @@ def main(
     for i, prob in enumerate(probs):
         if prob > threshold:
             results.append((genre_names[i], prob.item()))
-    
+
     results = sorted(results, key=lambda x: x[1], reverse=True)
 
     if not results:
@@ -82,13 +96,6 @@ def main(
     else:
         for name, p in results:
             print(f" > {name}: {p:.2%}")
-
-
-
-
-    # features_path: Path = PROCESSED_DATA_DIR / "test_features.csv",
-    # model_path: Path = MODELS_DIR / "model.pkl",
-    # predictions_path: Path = PROCESSED_DATA_DIR / "test_predictions.csv",
 
 
 if __name__ == "__main__":

@@ -1,0 +1,33 @@
+# Parametry modelu MusicGenreClassifier
+model:
+  num_classes: 13       
+  learning_rate: 0.001
+  conv_out_channels: 64 
+  conv_kernel_size: 7    
+  conv_stride: 2
+  conv_padding: 3
+
+# Parametry danych MusicGenreDataModule
+data:
+  npy_dir: data/processed/npy_arrays
+  csv_path: data/processed/labels/msd-topMAGD.csv
+  batch_size: 2
+  seq_len: 128        
+  num_workers: 0
+
+# Parametry PyTorch Lightning
+trainer:
+  max_epochs: 10
+  accelerator: auto      
+  devices: 1
+  log_every_n_steps: 1
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.TQDMProgressBar
+      init_args:
+        refresh_rate: 1
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        dirpath: models/
+        filename: resnet50_prototype   
+        save_last: true                
+        every_n_epochs: 1
