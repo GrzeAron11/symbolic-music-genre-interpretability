@@ -9,7 +9,7 @@
 Projekt polega na wytrenowaniu klasyfikatora gatunku na wybranych datasetach MIDI i zastosowaniu metod concept-based interpretability do analizy, które cechy model uznaje za charakterystyczne dla każdego gatunku. Inspiracją jest praca Foscarina et al. (2022), gdzie TCAV zastosowano do klasyfikacji kompozytorów. Projekt przenosi to podejście na gatunki, definiując odpowiednie koncepty muzyczne. Dodatkowym elementem jest porównanie "definicji gatunku" zakodowanych w różnych datasetach oraz analiza próbek błędnie sklasyfikowanych.
 
 ## Planowany zakres eksperymentów
-* Trenowanie klasyfikatora gatunku na co najmniej dwóch różnych zbiorach muzyki symbolicznej.
+* Trenowanie klasyfikatora gatunku na co najmniej trzech różnych zbiorach muzyki symbolicznej.
 * Eksperymenty z TCAV – testowanie wpływu zdefiniowanych konceptów muzycznych na predykcje gatunków wewnątrz jednego modelu oraz sprawdzenie, czy modele wytrenowane na zupełnie innych bazach plików MIDI zwracają uwagę na te same koncepty.
 * Analiza błędnie sklasyfikowanych utworów w celu weryfikacji jakie cechy wpłynęły na błędną predykcje.
 
@@ -23,7 +23,7 @@ Program będzie zawierał interfejs wiersza poleceń (CLI). Główne funkcjonaln
 
 ## Planowany stack technologiczny
 Stack został dobrany tak, aby spełniać wymogi dotyczące projektu oraz eksperymentów ML:
-* **Język i środowisko:** Python 3.10+, zarządzanie zależnościami i środowiskiem wirtualnym za pomocą Poetry.
+* **Język i środowisko:** Python 3.11+, zarządzanie zależnościami i środowiskiem wirtualnym za pomocą Poetry.
 * **Struktura projektu:** Szablon Cookiecutter Data Science.
 * **Deep Learning:** PyTorch wraz z PyTorch Lightning.
 * **Przetwarzanie muzyki symbolicznej:** Biblioteka pretty_midi lub muspy do parsowania, analizy i manipulacji plikami MIDI.
@@ -39,13 +39,13 @@ Stack został dobrany tak, aby spełniać wymogi dotyczące projektu oraz eksper
 ## Harmonogram projektu
 * **Tydzień 1 (18.03.2026 – 24.03.2026):** Analiza literatury i utworzenie tabeli z własnymi komentarzami i informacjami o przestudiowanych artykułach.
 * **Tydzień 2 (25.03.2026 – 31.03.2026):** Pobranie i wstępne przetworzenie datasetów, utworzenie wstępnego modelu klasyfikatora.
-* **Tydzień 3 (01.04.2026 – 07.04.2026):** Integracja z W&B, przygotowanie skryptów konfiguracyjnych.
-* **Tydzień 4 (08.04.2026 – 14.04.2026):** Trening sieci.
+* **Tydzień 3 (01.04.2026 – 07.04.2026):** Integracja z W&B, przygotowanie skryptów konfiguracyjnych, sformułowanie hipotez badawczych.
+* **Tydzień 4 (08.04.2026 – 14.04.2026):** Trening sieci, definicja konceptów używanych do TCAV.
 * **Tydzień 5 (15.04.2026 – 21.04.2026):** Implementacje funkcji które będą określać "nasilenie" danego konceptu muzycznego, przygotowanie podzbiorów danych które reprezentują te koncepty (do wykorzystania w TCAV).
 * **Tydzień 6 (22.04.2026 – 28.04.2026):** Trenowanie klasyfikatorów liniowych które rozdzielą zbiór losowy od zbioru reprezentującego koncept muzyczny (CAV), ewaluacja tego jak ważne są zdefiniowane wcześniej koncepty względem poszczególnych gatunków.
 * **Tydzień 7 (29.04.2026 – 05.05.2026):** Analiza wyników i poszukiwanie błędnych klasyfikacji. Weryfikacja różnic definicji gatunków pomiędzy różnymi zbiorami danych.
-* **Tydzień 8 (06.05.2026 – 12.05.2026):** testy integracyjne i środowiskowe (tox), przygotowanie instrukcji użytkowania.
-* **Tydzień 9 (13.05.2026 – 19.05.2026):** Ostatnie poprawki, nagranie filmu demonstracyjnego.
+* **Tydzień 8 (06.05.2026 – 12.05.2026):** Testy integracyjne i środowiskowe (tox), przygotowanie instrukcji użytkowania, ostatnie poprawki.
+* **Tydzień 9 (13.05.2026 – 19.05.2026):** Raport z sekcji  eksperymentalnej, dyskusja wyników, nagranie filmu demonstracyjnego.
 * **Tydzień 10 (20.05.2026 – 25.05.2026):** Zebranie i omówienie wyników, oddanie projektu.
 
 ## Bibliografia
