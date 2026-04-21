@@ -21,6 +21,12 @@ trainer:
   accelerator: auto      
   devices: 1
   log_every_n_steps: 1
+  logger:
+    class_path: lightning.pytorch.loggers.WandbLogger
+    init_args:
+      project: "symbolic-music-genre-interpretability"
+      name: "baseline_resnet50"
+      log_model: true
   callbacks:
     - class_path: lightning.pytorch.callbacks.TQDMProgressBar
       init_args:

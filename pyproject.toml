@@ -29,7 +29,8 @@ dependencies = [
     "pretty_midi",
     "torchvision (>=0.26.0,<0.27.0)",
     "pandas (>=3.0.2,<4.0.0)",
-    "jsonargparse[signatures] (>=4.27.7)"
+    "jsonargparse[signatures] (>=4.27.7)",
+    "wandb (>=0.26.0,<0.27.0)"
 ]
 
 [tool.ruff]

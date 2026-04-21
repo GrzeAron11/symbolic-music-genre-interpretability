@@ -192,9 +192,16 @@ cython_debug/
 
 # VS Code
 .vscode/
+.vs/
 
 #models
 /models/
 
 #lightning logs
 /lightning_logs/
+
+# W&B logs and metadata
+wandb/
+
+# Auto-generated config from LightningCLI
+config.yaml
