@@ -14,24 +14,25 @@ requires-python = ">=3.11,<3.14"
 classifiers = [
     "Programming Language :: Python :: 3",
 ]
-dependencies = [
-    "loguru",
-    "mkdocs",
-    "pip",
-    "pytest",
-    "python-dotenv",
-    "ruff",
-    "tqdm",
-    "typer",
-    "numpy>=2.4.4,<3.0.0",
-    "torch",
-    "lightning",
-    "pretty_midi",
-    "torchvision (>=0.26.0,<0.27.0)",
-    "pandas (>=3.0.2,<4.0.0)",
-    "jsonargparse[signatures] (>=4.27.7)",
-    "wandb (>=0.26.0,<0.27.0)"
-]
+[tool.poetry.dependencies]
+python = ">=3.11,<3.14"
+loguru = "*"
+mkdocs = "*"
+pip = "*"
+pytest = "*"
+python-dotenv = "*"
+ruff = "*"
+tqdm = "*"
+typer = "*"
+numpy = ">=2.4.3,<3.0.0"
+pretty_midi = "*"
+pandas = ">=3.0.2,<4.0.0"
+jsonargparse = { extras = ["signatures"], version = ">=4.27.7" }
+wandb = ">=0.26.0"
+torch = { version = "2.7.0+cu128", source = "pytorch-gpu" }
+torchvision = { version = "0.22.0+cu128", source = "pytorch-gpu" }
+lightning = ">=2.4.0"
+
 
 [tool.ruff]
 line-length = 99
@@ -44,3 +45,8 @@ extend-select = ["I"]  # Add import sorting
 [tool.ruff.lint.isort]
 known-first-party = ["wimu_smgi"]
 force-sort-within-sections = true
+
+[[tool.poetry.source]]
+name = "pytorch-gpu"
+url = "https://download.pytorch.org/whl/cu128"
+priority = "explicit"

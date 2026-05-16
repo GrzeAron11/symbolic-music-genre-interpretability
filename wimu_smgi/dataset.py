@@ -6,14 +6,15 @@ from pathlib import Path
 from loguru import logger
 
 class MusicGenreDataset(Dataset):
-    def __init__(self, npy_dir: Path, csv_path: Path, seq_len: int = 128):
+    def __init__(self, npy_dir: Path, csv_path: Path, seq_len: int = 128, augment: bool = False):
         self.npy_dir = Path(npy_dir)
         self.seq_len = seq_len
+        self.augment = augment
 
         logger.info(f"Loading labels from: {csv_path}")
         self.df = pd.read_csv(csv_path)
         self.file_names = self.df['file_id'].values
-        labels_df = self.df.drop(columns=['file_id', 'genre_list'])
+        labels_df = self.df.drop(columns=['file_id', 'genre_list'], errors='ignore')
         self.genre_columns = labels_df.columns.tolist()
 
 
@@ -21,20 +22,21 @@ class MusicGenreDataset(Dataset):
         self.df.set_index('file_id', inplace=True)
         self.valid_paths = []
         self.labels = []
-        all_npy_files = list(self.npy_dir.glob("*.npy"))
-        for npy_path in all_npy_files:
-                    track_id = npy_path.stem.split("__")[0]
+        all_npz_files = list(self.npy_dir.glob("*.npz"))
+        for npz_path in all_npz_files:
+                    track_id = npz_path.stem.split("__")[0]
                     # Jeśli ten utwór znajduje się w naszym CSV, dodajemy go do Datasetu
                     if track_id in self.df.index:
-                        self.valid_paths.append(npy_path)
+                        self.valid_paths.append(npz_path)
                         label_vector = self.df.loc[track_id, self.genre_columns].values.astype(np.float32)
                         self.labels.append(label_vector)
 
 
-        self.labels = labels_df.values.astype(np.float32)
+#        self.labels = labels_df.values.astype(np.float32)
         logger.info(f"Dataset initialized. Samples: {len(self.valid_paths)}, Genres: {len(self.genre_columns)}")
     def __len__(self):
         return len(self.valid_paths)
+    
     def __getitem__(self, idx):
         file_path = self.valid_paths[idx]
         
@@ -42,34 +44,47 @@ class MusicGenreDataset(Dataset):
         d_final = np.zeros((self.seq_len, 128), dtype=np.float32)
         
         try:
-            data = np.load(file_path, allow_pickle=True).item()
-            melody = data.get('melody')
-            drums = data.get('drums')
+            with np.load(file_path) as data:
+                melody = data['melody']
+                drums = data['drums']
 
             has_m = melody is not None and melody.size > 0
             has_d = drums is not None and drums.size > 0
 
+            actual_len = 0
             if has_m:
                 actual_len = melody.shape[0]
             elif has_d:
                 actual_len = drums.shape[0]
-            else:
-                actual_len = 0
 
             if actual_len > 0:
                 if actual_len > self.seq_len:
                     start = np.random.randint(0, actual_len - self.seq_len)
                     end = start + self.seq_len
                     if has_m and melody.shape[0] >= end:
-                        m_final[:] = melody[start:end, :128]
+                        m_final[:] = melody[start:end, :128].astype(np.float32) / 127.0
                     
                     if has_d and drums.shape[0] >= end:
-                        d_final[:] = drums[start:end, :128]
+                        d_final[:] = drums[start:end, :128].astype(np.float32) / 127.0
                 else:
                     if has_m:
-                        m_final[:actual_len, :] = melody[:actual_len, :128]
+                        m_final[:actual_len, :] = melody[:actual_len, :128].astype(np.float32) / 127.0
                     if has_d:
-                        d_final[:actual_len, :] = drums[:actual_len, :128]
+                        d_final[:actual_len, :] = drums[:actual_len, :128].astype(np.float32) / 127.0
+
+            if self.augment:
+                # Transpozycja od -6 do +6 poltonow (TYLKO dla melodii, perkusyjnej nie można bo do nut są przypisane odpowiednie bębny/talerze)
+                shift = np.random.randint(-6, 7) 
+                
+                if shift > 0:
+                    m_final_shifted = np.zeros_like(m_final)
+                    m_final_shifted[:, shift:] = m_final[:, :-shift]
+                    m_final = m_final_shifted
+                    
+                elif shift < 0:
+                    m_final_shifted = np.zeros_like(m_final)
+                    m_final_shifted[:, :shift] = m_final[:, -shift:] 
+                    m_final = m_final_shifted
 
             m_tensor = torch.from_numpy(m_final).T
             d_tensor = torch.from_numpy(d_final).T
@@ -77,8 +92,7 @@ class MusicGenreDataset(Dataset):
             x = torch.stack([m_tensor, d_tensor], dim=0)
             y = torch.tensor(self.labels[idx], dtype=torch.float32)
             
-            non_zero_elements = torch.count_nonzero(x)
-            print(f"DEBUG: {file_path.name} | Active notes in batch: {non_zero_elements}")
+            # print(f"DEBUG: {file_path.name} | Active notes in batch: {torch.count_nonzero(x)}")
 
             return x, y
 

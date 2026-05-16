@@ -1,5 +1,5 @@
 predict:
-  model_path: models/resnet50_prototype.ckpt
+  model_path: models/resnet18_prototype.ckpt
   csv_path: data/processed/labels/msd-topMAGD.csv
   threshold: 0.5
   seq_len: 128

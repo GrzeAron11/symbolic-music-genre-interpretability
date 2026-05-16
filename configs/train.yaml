@@ -1,6 +1,21 @@
+seed_everything: 42
+
 # Parametry modelu MusicGenreClassifier
 model:
-  num_classes: 13       
+  genre_names: 
+    - Blues
+    - Country
+    - Electronic
+    - Folk
+    - International
+    - Jazz
+    - Latin
+    - New Age
+    - Pop-Rock
+    - Rap
+    - Reggae
+    - RnB
+    - Vocal   
   learning_rate: 0.001
   conv_out_channels: 64 
   conv_kernel_size: 7    
@@ -11,21 +26,23 @@ model:
 data:
   npy_dir: data/processed/npy_arrays
   csv_path: data/processed/labels/msd-topMAGD.csv
-  batch_size: 2
-  seq_len: 128        
-  num_workers: 0
+  batch_size: 32
+  seq_len: 1024        
+  num_workers: 4
+
 
 # Parametry PyTorch Lightning
 trainer:
-  max_epochs: 10
+  max_epochs: 200
   accelerator: auto      
   devices: 1
-  log_every_n_steps: 1
+  log_every_n_steps: 50
   logger:
     class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
+      entity: "01169653-politechnika-warszawska"
       project: "symbolic-music-genre-interpretability"
-      name: "baseline_resnet50"
+      name: "baseline_resnet18"
       log_model: true
   callbacks:
     - class_path: lightning.pytorch.callbacks.TQDMProgressBar
@@ -34,6 +51,12 @@ trainer:
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
         dirpath: models/
-        filename: resnet50_prototype   
+        filename: resnet18_prototype   
         save_last: true                
         every_n_epochs: 1
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: "val_loss"
+        min_delta: 0.00        
+        patience: 7            
+        mode: "min"

@@ -7,7 +7,7 @@ from wimu_smgi.modeling.model import MusicGenreClassifier
 
 def main():
     load_dotenv()
-    LightningCLI(MusicGenreClassifier, MusicGenreDataModule)
+    LightningCLI(MusicGenreClassifier, MusicGenreDataModule, save_config_kwargs={"overwrite": True})
 
 
 if __name__ == "__main__":
