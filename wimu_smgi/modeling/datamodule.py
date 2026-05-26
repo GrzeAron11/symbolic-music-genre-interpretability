@@ -1,7 +1,9 @@
 import copy as cp
 from pathlib import Path
+
 import lightning.pytorch as pl
-import torch
+from loguru import logger
+import numpy as np
 from torch.utils.data import DataLoader, random_split
 
 from wimu_smgi.dataset import MusicGenreDataset
@@ -31,14 +33,25 @@ class MusicGenreDataModule(pl.LightningDataModule):
             augment=False
         )
         train_sub, val_sub, test_sub = random_split(full_dataset, [0.8, 0.1, 0.1])
-        
+
         train_sub.dataset = cp.copy(full_dataset)
         train_sub.dataset.augment = True
-        
+
         self.train_data = train_sub
         self.val_data = val_sub
         self.test_data = test_sub
 
+        def get_genre_counts(subset, dataset):
+            if len(subset) == 0:
+                return np.zeros(len(dataset.genre_columns))
+            subset_labels = np.array([dataset.labels[i] for i in subset.indices])
+            return subset_labels.sum(axis=0)
+        train_counts = get_genre_counts(self.train_data, full_dataset)
+        val_counts = get_genre_counts(self.val_data, full_dataset)
+        test_counts = get_genre_counts(self.test_data, full_dataset)
+        logger.info("\nRozkład gatunków we wczytanych zbiorach (Trening | Walidacja | Test)")
+        for i, genre_name in enumerate(full_dataset.genre_columns):
+            logger.info(f"{genre_name.ljust(15)}: {int(train_counts[i]):4d} | {int(val_counts[i]):4d} | {int(test_counts[i]):4d}")
 
     def train_dataloader(self):
         return DataLoader(

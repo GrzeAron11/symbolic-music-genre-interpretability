@@ -33,7 +33,7 @@ data:
 
 # Parametry PyTorch Lightning
 trainer:
-  max_epochs: 200
+  max_epochs: 400
   accelerator: auto      
   devices: 1
   log_every_n_steps: 50
@@ -51,12 +51,14 @@ trainer:
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
         dirpath: models/
-        filename: resnet18_prototype   
-        save_last: true                
-        every_n_epochs: 1
+        filename: "resnet18_prototype-{epoch:02d}-{val_loss:.2f}"
+        monitor: "val_loss"
+        mode: "min"
+        save_top_k: 1
+        save_last: true
     - class_path: lightning.pytorch.callbacks.EarlyStopping
       init_args:
         monitor: "val_loss"
         min_delta: 0.00        
-        patience: 7            
+        patience: 10           
         mode: "min"

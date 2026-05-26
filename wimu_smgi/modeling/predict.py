@@ -1,10 +1,11 @@
 from pathlib import Path
+
+from loguru import logger
 import numpy as np
 import pandas as pd
 import torch
 import typer
 import yaml
-from loguru import logger
 
 from wimu_smgi.modeling.model import MusicGenreClassifier
 

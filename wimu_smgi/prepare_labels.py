@@ -1,21 +1,21 @@
-from pathlib import Path
-import pandas as pd
 from loguru import logger
+import pandas as pd
 import typer
 
-from wimu_smgi.config import RAW_DATA_DIR, PROCESSED_DATA_DIR
+from wimu_smgi.config import PROCESSED_DATA_DIR, RAW_DATA_DIR
 
 app = typer.Typer()
+
 
 @app.command()
 def main(
     input_file: str = typer.Argument(
-        "labels_raw.cls", 
+        "labels_raw.cls",
         help="Labels file in .cls format"
     ),
     output_file: str = typer.Option(
-        "dataset.csv", 
-        "--out", "-o", 
+        "dataset.csv",
+        "--out", "-o",
         help="Output CSV file name (default: dataset.csv)"
     ),
 ):
@@ -45,6 +45,7 @@ def main(
     except Exception as e:
         logger.error(f"Error occurred while creating CSV: {e}")
         raise typer.Exit(code=1)
+
 
 if __name__ == "__main__":
     app()

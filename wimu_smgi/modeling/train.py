@@ -1,5 +1,5 @@
-from lightning.pytorch.cli import LightningCLI
 from dotenv import load_dotenv
+from lightning.pytorch.cli import LightningCLI
 
 from wimu_smgi.modeling.datamodule import MusicGenreDataModule
 from wimu_smgi.modeling.model import MusicGenreClassifier

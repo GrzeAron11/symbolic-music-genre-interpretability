@@ -1,8 +1,8 @@
+import lightning.pytorch as pl
 import torch
 from torch import nn
-import lightning.pytorch as pl
-import torchvision.models as models
 import torchmetrics
+import torchvision.models as models
 
 
 class MusicGenreClassifier(pl.LightningModule):
@@ -46,7 +46,7 @@ class MusicGenreClassifier(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         inputs, labels = batch
         outputs = self(inputs)
-        
+
         loss = self.criterion(outputs, labels)
 
         y_true_indices = torch.argmax(labels, dim=1)
@@ -70,18 +70,17 @@ class MusicGenreClassifier(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
-
     def test_step(self, batch, batch_idx):
         inputs, labels = batch
         outputs = self(inputs)
         loss = self.criterion(outputs, labels)
-        
+
         y_true_indices = torch.argmax(labels, dim=1)
         acc = self.accuracy(outputs, y_true_indices)
-        
+
         self.log('test_loss', loss)
         self.log("test_acc", acc, on_epoch=True, prog_bar=True, logger=True)
-        
+
         self.acc_per_class(outputs, y_true_indices)
         self.precision_per_class(outputs, y_true_indices)
         self.recall_per_class(outputs, y_true_indices)
@@ -92,13 +91,13 @@ class MusicGenreClassifier(pl.LightningModule):
         class_precisions = self.precision_per_class.compute()
         class_recalls = self.recall_per_class.compute()
         class_f1s = self.f1_per_class.compute()
-        
+
         for i, genre_name in enumerate(self.genres):
             self.log(f"test_acc/{genre_name}", class_accuracies[i])
             self.log(f"test_precision/{genre_name}", class_precisions[i])
             self.log(f"test_recall/{genre_name}", class_recalls[i])
             self.log(f"test_f1/{genre_name}", class_f1s[i])
-            
+
         self.acc_per_class.reset()
         self.precision_per_class.reset()
         self.recall_per_class.reset()
